@@ -4,11 +4,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/components/ui/cn";
 import type { AttendanceDateStatus } from "@/lib/data";
 import { DatePicker } from "./date-picker";
-import { isValidMonthString, shiftDate, shiftMonth } from "./params";
+import { MonthPicker } from "./month-picker";
+import { shiftDate, shiftMonth } from "./params";
 
 /**
  * Hook kecil untuk kontrol navigasi query: menggabungkan param aktif,
@@ -79,7 +79,7 @@ export function DateNav({ date, statuses, totalStudents, className }: DateNavPro
 
 type MonthNavProps = { month: string; className?: string };
 
-/** Pemilih bulan rekap: tombol bulan sebelum/berikut + input month. */
+/** Pemilih bulan rekap: tombol bulan sebelum/berikut + popover bulan. */
 export function MonthNav({ month, className }: MonthNavProps) {
   const { update, isPending } = useQueryNavigation();
   return (
@@ -96,17 +96,10 @@ export function MonthNav({ month, className }: MonthNavProps) {
         <ChevronLeft className="size-5" aria-hidden="true" />
       </Button>
       <div className="min-w-0 flex-1">
-        <label htmlFor="bulan-rekap" className="sr-only">
-          Bulan rekap
-        </label>
-        <Input
-          id="bulan-rekap"
-          type="month"
-          value={month}
-          onChange={(event) => {
-            if (isValidMonthString(event.target.value)) update({ month: event.target.value });
-          }}
-          className="text-center font-mono"
+        <MonthPicker
+          key={month}
+          month={month}
+          onSelectAction={(nextMonth) => update({ month: nextMonth })}
         />
       </div>
       <Button

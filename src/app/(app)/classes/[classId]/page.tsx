@@ -148,9 +148,9 @@ export default async function ClassPage({ params, searchParams }: PageProps) {
           </div>
           {hasStudents ? (
             <>
-              <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex flex-col gap-3">
                 <StudentSelect students={students} value={selectedStudentId} />
-                <MonthNav month={month} className="sm:w-56 sm:shrink-0" />
+                <MonthNav month={month} />
               </div>
               {studentRecap ? (
                 <>
