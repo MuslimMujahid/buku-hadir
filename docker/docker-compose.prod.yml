@@ -16,5 +16,3 @@ services:
       RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:?RESEND_FROM_EMAIL is required}
       RESEND_FROM_NAME: ${RESEND_FROM_NAME:-Absensi}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?NEXT_PUBLIC_APP_URL is required}
-    ports:
-      - "3000:3000"
