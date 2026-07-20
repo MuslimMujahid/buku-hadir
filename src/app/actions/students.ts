@@ -4,9 +4,11 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import {
+  bulkStudentNamesSchema,
   classIdSchema,
   fieldErrorsFromZod,
   invalidAction,
+  parseNameCells,
   readFormString,
   studentIdSchema,
   studentNameSchema,
@@ -75,6 +77,45 @@ export async function addStudentAction(
     });
     revalidatePath(`/classes/${classId}`);
     return successfulAction("Siswa berhasil ditambahkan.", { studentId: student.id });
+  } catch {
+    return invalidAction("Siswa tidak dapat ditambahkan. Silakan coba lagi.");
+  }
+}
+
+/** Tambah banyak siswa sekaligus dari daftar nama (hasil salin dari spreadsheet). */
+export async function bulkAddStudentsAction(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const user = await requireUser();
+  const classResult = classIdSchema.safeParse(readFormString(formData, "classId"));
+  const namesInput = parseNameCells(readFormString(formData, "names"));
+  const namesResult = bulkStudentNamesSchema.safeParse(namesInput);
+  const fieldErrors: Record<string, string[]> = {};
+
+  if (!classResult.success) Object.assign(fieldErrors, fieldErrorsFromZod(classResult.error));
+  if (!namesResult.success) {
+    const namesErrors = fieldErrorsFromZod(namesResult.error);
+    const firstNamesMessage =
+      Object.values(namesErrors).flat()[0] ?? namesResult.error.issues[0]?.message;
+    if (firstNamesMessage) fieldErrors.names = [firstNamesMessage];
+  }
+  if (!classResult.success || !namesResult.success) {
+    return invalidAction("Periksa daftar nama.", fieldErrors);
+  }
+
+  const ownedClass = await db.class.findFirst({
+    where: { id: classResult.data, ownerId: user.id },
+    select: { id: true },
+  });
+  if (!ownedClass) return invalidAction("Kelas tidak ditemukan.");
+
+  try {
+    await db.student.createMany({
+      data: namesResult.data.map((name) => ({ classId: classResult.data, name })),
+    });
+    revalidatePath(`/classes/${classResult.data}`);
+    return successfulAction(`${namesResult.data.length} siswa berhasil ditambahkan.`);
   } catch {
     return invalidAction("Siswa tidak dapat ditambahkan. Silakan coba lagi.");
   }
