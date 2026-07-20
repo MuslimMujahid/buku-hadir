@@ -3,7 +3,7 @@ name: absensi
 services:
   app:
     build:
-      context: ..
+      context: .
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
