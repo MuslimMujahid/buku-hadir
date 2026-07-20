@@ -13,8 +13,18 @@ type StatusMeta = {
 };
 
 export const statusMeta: Record<AttendanceStatus, StatusMeta> = {
-  HADIR: { letter: "H", word: "Hadir", fg: "text-hadir", softBg: "bg-hadir-soft" },
-  SAKIT: { letter: "S", word: "Sakit", fg: "text-sakit", softBg: "bg-sakit-soft" },
+  HADIR: {
+    letter: "H",
+    word: "Hadir",
+    fg: "text-hadir",
+    softBg: "bg-hadir-soft",
+  },
+  SAKIT: {
+    letter: "S",
+    word: "Sakit",
+    fg: "text-sakit",
+    softBg: "bg-sakit-soft",
+  },
   IZIN: { letter: "I", word: "Izin", fg: "text-izin", softBg: "bg-izin-soft" },
   ALPA: { letter: "A", word: "Alpa", fg: "text-alpa", softBg: "bg-alpa-soft" },
 };
@@ -47,7 +57,6 @@ export function Stamp({ status, size = "md", className }: StampProps) {
         className,
       )}
     >
-      <span aria-hidden="true">{meta.letter}</span>
       <span>{meta.word}</span>
     </span>
   );
