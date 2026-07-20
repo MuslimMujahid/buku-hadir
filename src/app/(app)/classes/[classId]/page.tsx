@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarX2, UserRoundPlus, UsersRound } from "lucide-react";
 import { requireUser } from "@/lib/session";
 import {
+  getAttendanceDates,
   getAttendanceForDate,
   getMonthlyRecap,
   getOwnedClass,
@@ -49,7 +50,12 @@ export default async function ClassPage({ params, searchParams }: PageProps) {
     : students[0]?.id;
 
   /* Data per tab diambil terpisah supaya tab lain tidak membebani render. */
-  const attendance = tab === "attendance" ? await getAttendanceForDate(classId, date) : null;
+  const attendanceData =
+    tab === "attendance"
+      ? await Promise.all([getAttendanceForDate(classId, date), getAttendanceDates(classId)])
+      : null;
+  const attendance = attendanceData?.[0] ?? null;
+  const attendanceStatuses = attendanceData?.[1] ?? [];
   const studentRecap =
     tab === "student" && selectedStudentId
       ? await getStudentRecap(classId, month, selectedStudentId)
@@ -93,7 +99,7 @@ export default async function ClassPage({ params, searchParams }: PageProps) {
             </h2>
             <p className="mt-0.5 text-sm text-ink-soft">{formatTanggalPanjang(date)}</p>
           </div>
-          <DateNav date={date} />
+          <DateNav date={date} statuses={attendanceStatuses} totalStudents={students.length} />
           {hasStudents ? (
             <>
               <details className="group rounded-lg border border-line bg-raised">

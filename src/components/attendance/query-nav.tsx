@@ -6,7 +6,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/components/ui/cn";
-import { isValidDateString, isValidMonthString, shiftDate, shiftMonth } from "./params";
+import type { AttendanceDateStatus } from "@/lib/data";
+import { DatePicker } from "./date-picker";
+import { isValidMonthString, shiftDate, shiftMonth } from "./params";
 
 /**
  * Hook kecil untuk kontrol navigasi query: menggabungkan param aktif,
@@ -31,10 +33,15 @@ function useQueryNavigation() {
 
 const navButtonClass = "w-11 shrink-0 px-0";
 
-type DateNavProps = { date: string; className?: string };
+type DateNavProps = {
+  date: string;
+  statuses: AttendanceDateStatus[];
+  totalStudents: number;
+  className?: string;
+};
 
-/** Pemilih tanggal absensi: tombol hari sebelum/berikut + input date. */
-export function DateNav({ date, className }: DateNavProps) {
+/** Pemilih tanggal absensi: tombol hari sebelum/berikut + kalender. */
+export function DateNav({ date, statuses, totalStudents, className }: DateNavProps) {
   const { update, isPending } = useQueryNavigation();
   return (
     <div
@@ -50,17 +57,12 @@ export function DateNav({ date, className }: DateNavProps) {
         <ChevronLeft className="size-5" aria-hidden="true" />
       </Button>
       <div className="min-w-0 flex-1">
-        <label htmlFor="tanggal-absensi" className="sr-only">
-          Tanggal absensi
-        </label>
-        <Input
-          id="tanggal-absensi"
-          type="date"
-          value={date}
-          onChange={(event) => {
-            if (isValidDateString(event.target.value)) update({ date: event.target.value });
-          }}
-          className="text-center font-mono"
+        <DatePicker
+          key={date}
+          date={date}
+          statuses={statuses}
+          totalStudents={totalStudents}
+          onSelect={(nextDate) => update({ date: nextDate })}
         />
       </div>
       <Button

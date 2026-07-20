@@ -88,16 +88,13 @@ export async function saveAttendanceAction(
     if (!isAttendanceStatus(entry.status)) return invalidAction("Status kehadiran tidak valid.");
     statuses.set(entry.studentId, entry.status);
   }
-  if (statuses.size !== expectedIds.size) return invalidAction("Setiap siswa harus memiliki satu status.");
 
   try {
     await db.$transaction(async (transaction) => {
-      for (const student of ownedClass.students) {
-        const status = statuses.get(student.id);
-        if (!status) throw new Error("Missing attendance status");
+      for (const [studentId, status] of statuses) {
         await transaction.attendance.upsert({
-          where: { studentId_date: { studentId: student.id, date: parsedDate } },
-          create: { studentId: student.id, date: parsedDate, status },
+          where: { studentId_date: { studentId, date: parsedDate } },
+          create: { studentId, date: parsedDate, status },
           update: { status },
         });
       }

@@ -9,6 +9,7 @@ import { statusMeta } from "@/components/ui/stamp";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { RenameStudentDialog } from "./rename-student-dialog";
+import { IncompleteAttendanceDialog } from "./incomplete-attendance-dialog";
 import { RemoveStudentDialog } from "./remove-student-dialog";
 import { SEGMENT_CHECKED } from "./status-styles";
 
@@ -36,18 +37,21 @@ function sameStatuses(a: Statuses, b: Statuses, students: StudentLite[]): boolea
 
 /**
  * Papan absensi satu tanggal: kontrol tersegmentasi empat status per siswa,
- * validasi daftar penuh sebelum submit, indikator kotor, dan bilah simpan
- * lengket dengan umpan balik status.
+ * validasi payload, indikator kotor, dan bilah simpan lengket dengan umpan
+ * balik status.
  */
 export function AttendanceBoard({ classId, date, students, initial }: AttendanceBoardProps) {
   const [statuses, setStatuses] = useState<Statuses>(() => fromServer(students, initial));
   const [baseline, setBaseline] = useState<Statuses>(() => fromServer(students, initial));
-  const [missingIds, setMissingIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [incompleteCount, setIncompleteCount] = useState(0);
   const [renameStudent, setRenameStudent] = useState<StudentLite | null>(null);
   const [removeStudent, setRemoveStudent] = useState<StudentLite | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [state, formAction, isPending] = useActionState(saveAttendanceAction, initialActionState);
 
+  const formRef = useRef<HTMLFormElement>(null);
+  const allowPartialSubmitRef = useRef(false);
+  const partialSubmitStartedRef = useRef(false);
   /* Ref agar efek sukses membaca status terbaru (disinkron lewat efek, bukan saat render). */
   const statusesRef = useRef(statuses);
   useEffect(() => {
@@ -73,9 +77,11 @@ export function AttendanceBoard({ classId, date, students, initial }: Attendance
 
   /* Setelah simpan sukses, posisi saat ini menjadi baseline baru. */
   useEffect(() => {
+    if (state.status !== "success" && state.status !== "error") return;
+    partialSubmitStartedRef.current = false;
     if (state.status !== "success") return;
     setBaseline(statusesRef.current);
-    setMissingIds(new Set());
+    setIncompleteCount(0);
     setLocalError(null);
   }, [state]);
 
@@ -94,31 +100,42 @@ export function AttendanceBoard({ classId, date, students, initial }: Attendance
 
   function setStatus(studentId: string, status: AttendanceStatusValue) {
     setStatuses((prev) => ({ ...prev, [studentId]: status }));
-    setMissingIds((prev) => {
-      if (!prev.has(studentId)) return prev;
-      const next = new Set(prev);
-      next.delete(studentId);
-      return next;
-    });
     setLocalError(null);
   }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    const missing = students.filter((student) => !statuses[student.id]);
-    if (missing.length > 0) {
+    if (isPending) {
       event.preventDefault();
-      setMissingIds(new Set(missing.map((student) => student.id)));
-      setLocalError(`Lengkapi status kehadiran untuk ${missing.length} siswa yang ditandai.`);
-      document.getElementById(`status-${missing[0].id}-HADIR`)?.focus();
       return;
     }
-    setMissingIds(new Set());
-    setLocalError(null);
+    const missing = students.filter((student) => !statuses[student.id]);
+    const allowingPartialSubmit = allowPartialSubmitRef.current;
+    allowPartialSubmitRef.current = false;
+    if (missing.length > 0 && !allowingPartialSubmit) {
+      event.preventDefault();
+      partialSubmitStartedRef.current = false;
+      setIncompleteCount(missing.length);
+      setLocalError(null);
+    }
+  }
+
+  function confirmPartialSubmit() {
+    if (isPending || partialSubmitStartedRef.current) return;
+    partialSubmitStartedRef.current = true;
+    allowPartialSubmitRef.current = true;
+    setIncompleteCount(0);
+    const form = formRef.current;
+    if (!form) {
+      allowPartialSubmitRef.current = false;
+      partialSubmitStartedRef.current = false;
+      return;
+    }
+    form.requestSubmit();
   }
 
   let feedback: { tone: "error" | "success" | "muted"; text: string } = {
     tone: "muted",
-    text: "Tandai setiap siswa, lalu simpan.",
+    text: "Tandai siswa, lalu simpan.",
   };
   if (localError) feedback = { tone: "error", text: localError };
   else if (state.status === "error" && state.message) feedback = { tone: "error", text: state.message };
@@ -127,7 +144,7 @@ export function AttendanceBoard({ classId, date, students, initial }: Attendance
 
   return (
     <>
-      <form action={formAction} onSubmit={handleSubmit} aria-label="Formulir absensi">
+      <form ref={formRef} action={formAction} onSubmit={handleSubmit} aria-label="Formulir absensi">
       <input type="hidden" name="classId" value={classId} />
       <input type="hidden" name="date" value={date} />
       <input type="hidden" name="statuses" value={payload} />
@@ -162,14 +179,10 @@ export function AttendanceBoard({ classId, date, students, initial }: Attendance
 
       <ol className="mt-3 flex flex-col gap-2.5">
         {students.map((student, index) => {
-          const isMissing = missingIds.has(student.id);
           return (
             <li
               key={student.id}
-              className={cn(
-                "rounded-md border bg-raised p-3 shadow-card transition-colors",
-                isMissing ? "border-alpa" : "border-line",
-              )}
+              className="rounded-md border border-line bg-raised p-3 shadow-card transition-colors"
             >
               <div className="mb-2 flex items-center gap-2">
                 <span aria-hidden="true" className="font-mono text-xs tabular-nums text-ink-faint">
@@ -200,12 +213,10 @@ export function AttendanceBoard({ classId, date, students, initial }: Attendance
                     <Pencil className="size-4" aria-hidden="true" />
                   </Button>
                 </div>
-                {isMissing ? <span className="shrink-0 text-xs font-medium text-alpa">Wajib dipilih</span> : null}
               </div>
               <div
                 role="radiogroup"
                 aria-labelledby={`nama-${student.id}`}
-                aria-describedby={isMissing ? `wajib-${student.id}` : undefined}
                 className="grid grid-cols-4 gap-1 rounded-md bg-sunk p-1"
               >
                 {ATTENDANCE_STATUSES.map((status) => {
@@ -238,11 +249,6 @@ export function AttendanceBoard({ classId, date, students, initial }: Attendance
                   );
                 })}
               </div>
-              {isMissing ? (
-                <p id={`wajib-${student.id}`} className="mt-1.5 text-xs text-alpa">
-                  Pilih salah satu status untuk {student.name}.
-                </p>
-              ) : null}
             </li>
           );
         })}
@@ -270,6 +276,14 @@ export function AttendanceBoard({ classId, date, students, initial }: Attendance
         </div>
       </div>
     </form>
+      {incompleteCount > 0 ? (
+        <IncompleteAttendanceDialog
+          count={incompleteCount}
+          isPending={isPending}
+          onClose={() => setIncompleteCount(0)}
+          onConfirm={confirmPartialSubmit}
+        />
+      ) : null}
       {renameStudent ? (
         <RenameStudentDialog
           key={renameStudent.id}
