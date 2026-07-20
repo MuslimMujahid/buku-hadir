@@ -1,3 +1,5 @@
+name: absensi
+
 services:
   db:
     image: postgres:16-alpine
@@ -32,8 +34,8 @@ services:
 
   app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     restart: unless-stopped
     depends_on:
       db:
