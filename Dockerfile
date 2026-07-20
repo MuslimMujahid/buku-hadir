@@ -13,7 +13,6 @@ RUN npm ci
 FROM deps AS builder
 ENV BETTER_AUTH_URL=http://localhost:3000
 ENV BETTER_AUTH_SECRET=build-only-secret-replaced-at-runtime
-ENV NEXT_PUBLIC_APP_URL=http://localhost:3000
 ENV DATABASE_URL=postgresql://absensi:absensi@db:5432/absensi?schema=public
 
 COPY . .
