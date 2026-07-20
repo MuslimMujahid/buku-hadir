@@ -13,15 +13,27 @@ import {
 import { ATTENDANCE_STATUSES } from "@/lib/attendance";
 import { buttonClassName } from "@/components/ui/button";
 import { ClassTabs } from "@/components/attendance/class-tabs";
-import { DateNav, MonthNav, StudentSelect } from "@/components/attendance/query-nav";
+import {
+  DateNav,
+  MonthNav,
+  StudentSelect,
+} from "@/components/attendance/query-nav";
 import { AddStudentForm } from "@/components/attendance/add-student-form";
 import { AttendanceBoard } from "@/components/attendance/attendance-board";
 import { StatCard } from "@/components/attendance/stat-card";
 import { EmptyState } from "@/components/attendance/empty-state";
 import { HistoryList } from "@/components/attendance/history-list";
 import { MonthlyTable } from "@/components/attendance/monthly-table";
-import { firstParam, parseDateParam, parseMonthParam, parseTabParam } from "@/components/attendance/params";
-import { formatBulan, formatTanggalPanjang } from "@/components/attendance/format";
+import {
+  firstParam,
+  parseDateParam,
+  parseMonthParam,
+  parseTabParam,
+} from "@/components/attendance/params";
+import {
+  formatBulan,
+  formatTanggalPanjang,
+} from "@/components/attendance/format";
 
 export const metadata: Metadata = { title: "Detail Kelas" };
 
@@ -45,14 +57,19 @@ export default async function ClassPage({ params, searchParams }: PageProps) {
 
   const students = kelas.students;
   const hasStudents = students.length > 0;
-  const selectedStudentId = students.some((student) => student.id === studentParam)
+  const selectedStudentId = students.some(
+    (student) => student.id === studentParam,
+  )
     ? (studentParam as string)
     : students[0]?.id;
 
   /* Data per tab diambil terpisah supaya tab lain tidak membebani render. */
   const attendanceData =
     tab === "attendance"
-      ? await Promise.all([getAttendanceForDate(classId, date), getAttendanceDates(classId)])
+      ? await Promise.all([
+          getAttendanceForDate(classId, date),
+          getAttendanceDates(classId),
+        ])
       : null;
   const attendance = attendanceData?.[0] ?? null;
   const attendanceStatuses = attendanceData?.[1] ?? [];
@@ -60,7 +77,8 @@ export default async function ClassPage({ params, searchParams }: PageProps) {
     tab === "student" && selectedStudentId
       ? await getStudentRecap(classId, month, selectedStudentId)
       : null;
-  const monthlyRecap = tab === "monthly" ? await getMonthlyRecap(classId, month) : null;
+  const monthlyRecap =
+    tab === "monthly" ? await getMonthlyRecap(classId, month) : null;
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pb-16 pt-5 sm:px-6">
@@ -73,9 +91,13 @@ export default async function ClassPage({ params, searchParams }: PageProps) {
           Semua kelas
         </Link>
         <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
-          <h1 className="font-display text-3xl leading-tight text-ink">{kelas.name}</h1>
+          <h1 className="font-display text-3xl leading-tight text-ink">
+            {kelas.name}
+          </h1>
           <p className="text-sm text-ink-soft">
-            <span className="font-mono font-semibold tabular-nums text-ink">{students.length}</span>{" "}
+            <span className="font-mono font-semibold tabular-nums text-ink">
+              {students.length}
+            </span>{" "}
             siswa terdaftar
           </p>
         </div>
@@ -92,21 +114,36 @@ export default async function ClassPage({ params, searchParams }: PageProps) {
       </div>
 
       {tab === "attendance" ? (
-        <section aria-labelledby="judul-absensi" className="mt-5 flex flex-col gap-4">
+        <section
+          aria-labelledby="judul-absensi"
+          className="mt-5 flex flex-col gap-4"
+        >
           <div>
             <h2 id="judul-absensi" className="font-display text-xl text-ink">
               Absensi
             </h2>
-            <p className="mt-0.5 text-sm text-ink-soft">{formatTanggalPanjang(date)}</p>
+            <p className="mt-0.5 text-sm text-ink-soft">
+              {formatTanggalPanjang(date)}
+            </p>
           </div>
-          <DateNav date={date} statuses={attendanceStatuses} totalStudents={students.length} />
+          <DateNav
+            date={date}
+            statuses={attendanceStatuses}
+            totalStudents={students.length}
+          />
           {hasStudents ? (
             <>
               <details className="group rounded-lg border border-line bg-raised">
                 <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-medium text-ink [&::-webkit-details-marker]:hidden">
-                  <UserRoundPlus className="size-4 text-ink-soft" aria-hidden="true" />
+                  <UserRoundPlus
+                    className="size-4 text-ink-soft"
+                    aria-hidden="true"
+                  />
                   Tambah siswa baru
-                  <span aria-hidden="true" className="ml-auto font-mono text-ink-faint transition-transform group-open:rotate-45">
+                  <span
+                    aria-hidden="true"
+                    className="ml-auto font-mono text-ink-faint transition-transform group-open:rotate-45"
+                  >
                     +
                   </span>
                 </summary>
@@ -137,9 +174,15 @@ export default async function ClassPage({ params, searchParams }: PageProps) {
       ) : null}
 
       {tab === "student" ? (
-        <section aria-labelledby="judul-rekap-siswa" className="mt-5 flex flex-col gap-4">
+        <section
+          aria-labelledby="judul-rekap-siswa"
+          className="mt-5 flex flex-col gap-4"
+        >
           <div>
-            <h2 id="judul-rekap-siswa" className="font-display text-xl text-ink">
+            <h2
+              id="judul-rekap-siswa"
+              className="font-display text-xl text-ink"
+            >
               Rekap Siswa
             </h2>
             <p className="mt-0.5 text-sm text-ink-soft">
@@ -160,12 +203,18 @@ export default async function ClassPage({ params, searchParams }: PageProps) {
                     </h3>
                     <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
                       {ATTENDANCE_STATUSES.map((status) => (
-                        <StatCard key={status} status={status} value={studentRecap.totals[status]} />
+                        <StatCard
+                          key={status}
+                          status={status}
+                          value={studentRecap.totals[status]}
+                        />
                       ))}
                     </div>
                   </div>
                   <div>
-                    <h3 className="mb-2 text-sm font-medium text-ink-soft">Riwayat kehadiran</h3>
+                    <h3 className="mb-2 text-sm font-medium text-ink-soft">
+                      Riwayat kehadiran
+                    </h3>
                     {studentRecap.history.length > 0 ? (
                       <HistoryList history={studentRecap.history} />
                     ) : (
@@ -203,9 +252,15 @@ export default async function ClassPage({ params, searchParams }: PageProps) {
       ) : null}
 
       {tab === "monthly" ? (
-        <section aria-labelledby="judul-rekap-bulanan" className="mt-5 flex flex-col gap-4">
+        <section
+          aria-labelledby="judul-rekap-bulanan"
+          className="mt-5 flex flex-col gap-4"
+        >
           <div>
-            <h2 id="judul-rekap-bulanan" className="font-display text-xl text-ink">
+            <h2
+              id="judul-rekap-bulanan"
+              className="font-display text-xl text-ink"
+            >
               Rekap Bulanan
             </h2>
             <p className="mt-0.5 text-sm text-ink-soft">
@@ -216,15 +271,23 @@ export default async function ClassPage({ params, searchParams }: PageProps) {
           {hasStudents && monthlyRecap ? (
             <>
               <div>
-                <h3 className="mb-2 text-sm font-medium text-ink-soft">Total seluruh kelas</h3>
+                <h3 className="mb-2 text-sm font-medium text-ink-soft">
+                  Total seluruh kelas
+                </h3>
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
                   {ATTENDANCE_STATUSES.map((status) => (
-                    <StatCard key={status} status={status} value={monthlyRecap.totals[status]} />
+                    <StatCard
+                      key={status}
+                      status={status}
+                      value={monthlyRecap.totals[status]}
+                    />
                   ))}
                 </div>
               </div>
               <div>
-                <h3 className="mb-2 text-sm font-medium text-ink-soft">Rincian per siswa</h3>
+                <h3 className="mb-2 text-sm font-medium text-ink-soft">
+                  Rincian per siswa
+                </h3>
                 <MonthlyTable rows={monthlyRecap.students} />
               </div>
             </>
