@@ -1,5 +1,6 @@
 "use client";
 
+import { Pencil } from "lucide-react";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { saveAttendanceAction } from "@/app/actions/attendance";
 import { initialActionState } from "@/lib/validation";
@@ -7,6 +8,7 @@ import { ATTENDANCE_STATUSES, type AttendanceStatusValue } from "@/lib/attendanc
 import { statusMeta } from "@/components/ui/stamp";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
+import { RenameStudentDialog } from "./rename-student-dialog";
 import { SEGMENT_CHECKED } from "./status-styles";
 
 type StudentLite = { id: string; name: string };
@@ -40,6 +42,7 @@ export function AttendanceBoard({ classId, date, students, initial }: Attendance
   const [statuses, setStatuses] = useState<Statuses>(() => fromServer(students, initial));
   const [baseline, setBaseline] = useState<Statuses>(() => fromServer(students, initial));
   const [missingIds, setMissingIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [renameStudent, setRenameStudent] = useState<StudentLite | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [state, formAction, isPending] = useActionState(saveAttendanceAction, initialActionState);
 
@@ -121,7 +124,8 @@ export function AttendanceBoard({ classId, date, students, initial }: Attendance
   else if (state.status === "success" && state.message) feedback = { tone: "success", text: state.message };
 
   return (
-    <form action={formAction} onSubmit={handleSubmit} aria-label="Formulir absensi">
+    <>
+      <form action={formAction} onSubmit={handleSubmit} aria-label="Formulir absensi">
       <input type="hidden" name="classId" value={classId} />
       <input type="hidden" name="date" value={date} />
       <input type="hidden" name="statuses" value={payload} />
@@ -165,16 +169,24 @@ export function AttendanceBoard({ classId, date, students, initial }: Attendance
                 isMissing ? "border-alpa" : "border-line",
               )}
             >
-              <div className="mb-2 flex items-baseline gap-2">
+              <div className="mb-2 flex items-center gap-2">
                 <span aria-hidden="true" className="font-mono text-xs tabular-nums text-ink-faint">
                   {String(index + 1).padStart(2, "0")}
                 </span>
-                <span id={`nama-${student.id}`} className="min-w-0 break-words font-medium text-ink">
+                <span id={`nama-${student.id}`} className="min-w-0 flex-1 break-words font-medium text-ink">
                   {student.name}
                 </span>
-                {isMissing ? (
-                  <span className="ml-auto shrink-0 text-xs font-medium text-alpa">Wajib dipilih</span>
-                ) : null}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="md"
+                  className="ml-auto size-11 shrink-0 p-0"
+                  aria-label={`Ubah nama ${student.name}`}
+                  onClick={() => setRenameStudent(student)}
+                >
+                  <Pencil className="size-4" aria-hidden="true" />
+                </Button>
+                {isMissing ? <span className="shrink-0 text-xs font-medium text-alpa">Wajib dipilih</span> : null}
               </div>
               <div
                 role="radiogroup"
@@ -244,5 +256,14 @@ export function AttendanceBoard({ classId, date, students, initial }: Attendance
         </div>
       </div>
     </form>
+      {renameStudent ? (
+        <RenameStudentDialog
+          key={renameStudent.id}
+          classId={classId}
+          student={renameStudent}
+          onClose={() => setRenameStudent(null)}
+        />
+      ) : null}
+    </>
   );
 }

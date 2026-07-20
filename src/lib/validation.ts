@@ -19,6 +19,8 @@ export const studentNameSchema = z.object({
 
 export const classIdSchema = z.string().trim().min(1, "Kelas tidak valid.");
 
+export const studentIdSchema = z.string().trim().min(1, "Siswa tidak valid.");
+
 export function readFormString(formData: FormData, key: string): string {
   const value = formData.get(key);
   return typeof value === "string" ? value : "";
