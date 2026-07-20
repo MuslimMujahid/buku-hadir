@@ -1,6 +1,5 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { saveAttendanceAction } from "@/app/actions/attendance";
 import { initialActionState } from "@/lib/validation";
@@ -11,6 +10,7 @@ import { cn } from "@/components/ui/cn";
 import { RenameStudentDialog } from "./rename-student-dialog";
 import { IncompleteAttendanceDialog } from "./incomplete-attendance-dialog";
 import { RemoveStudentDialog } from "./remove-student-dialog";
+import { StudentMenu } from "./student-menu";
 import { SEGMENT_CHECKED } from "./status-styles";
 
 type StudentLite = { id: string; name: string };
@@ -192,26 +192,11 @@ export function AttendanceBoard({ classId, date, students, initial }: Attendance
                   {student.name}
                 </span>
                 <div className="ml-auto flex items-center">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="md"
-                    className="size-11 shrink-0 p-0"
-                    aria-label={`Hapus ${student.name}`}
-                    onClick={() => setRemoveStudent(student)}
-                  >
-                    <Trash2 className="size-4" aria-hidden="true" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="md"
-                    className="size-11 shrink-0 p-0"
-                    aria-label={`Ubah nama ${student.name}`}
-                    onClick={() => setRenameStudent(student)}
-                  >
-                    <Pencil className="size-4" aria-hidden="true" />
-                  </Button>
+                  <StudentMenu
+                    student={student}
+                    onRenameAction={() => setRenameStudent(student)}
+                    onRemoveAction={() => setRemoveStudent(student)}
+                  />
                 </div>
               </div>
               <div
