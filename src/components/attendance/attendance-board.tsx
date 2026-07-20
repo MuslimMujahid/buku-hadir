@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { saveAttendanceAction } from "@/app/actions/attendance";
 import { initialActionState } from "@/lib/validation";
@@ -9,6 +9,7 @@ import { statusMeta } from "@/components/ui/stamp";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { RenameStudentDialog } from "./rename-student-dialog";
+import { RemoveStudentDialog } from "./remove-student-dialog";
 import { SEGMENT_CHECKED } from "./status-styles";
 
 type StudentLite = { id: string; name: string };
@@ -43,6 +44,7 @@ export function AttendanceBoard({ classId, date, students, initial }: Attendance
   const [baseline, setBaseline] = useState<Statuses>(() => fromServer(students, initial));
   const [missingIds, setMissingIds] = useState<ReadonlySet<string>>(() => new Set());
   const [renameStudent, setRenameStudent] = useState<StudentLite | null>(null);
+  const [removeStudent, setRemoveStudent] = useState<StudentLite | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [state, formAction, isPending] = useActionState(saveAttendanceAction, initialActionState);
 
@@ -176,16 +178,28 @@ export function AttendanceBoard({ classId, date, students, initial }: Attendance
                 <span id={`nama-${student.id}`} className="min-w-0 flex-1 break-words font-medium text-ink">
                   {student.name}
                 </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="md"
-                  className="ml-auto size-11 shrink-0 p-0"
-                  aria-label={`Ubah nama ${student.name}`}
-                  onClick={() => setRenameStudent(student)}
-                >
-                  <Pencil className="size-4" aria-hidden="true" />
-                </Button>
+                <div className="ml-auto flex items-center">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="md"
+                    className="size-11 shrink-0 p-0"
+                    aria-label={`Hapus ${student.name}`}
+                    onClick={() => setRemoveStudent(student)}
+                  >
+                    <Trash2 className="size-4" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="md"
+                    className="size-11 shrink-0 p-0"
+                    aria-label={`Ubah nama ${student.name}`}
+                    onClick={() => setRenameStudent(student)}
+                  >
+                    <Pencil className="size-4" aria-hidden="true" />
+                  </Button>
+                </div>
                 {isMissing ? <span className="shrink-0 text-xs font-medium text-alpa">Wajib dipilih</span> : null}
               </div>
               <div
@@ -262,6 +276,14 @@ export function AttendanceBoard({ classId, date, students, initial }: Attendance
           classId={classId}
           student={renameStudent}
           onClose={() => setRenameStudent(null)}
+        />
+      ) : null}
+      {removeStudent ? (
+        <RemoveStudentDialog
+          key={removeStudent.id}
+          classId={classId}
+          student={removeStudent}
+          onClose={() => setRemoveStudent(null)}
         />
       ) : null}
     </>

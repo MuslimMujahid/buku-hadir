@@ -48,6 +48,39 @@ export async function renameStudentAction(
   }
 }
 
+export async function removeStudentAction(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const user = await requireUser();
+  const classResult = classIdSchema.safeParse(readFormString(formData, "classId"));
+  const studentIdResult = studentIdSchema.safeParse(readFormString(formData, "studentId"));
+  const fieldErrors: Record<string, string[]> = {};
+  if (!classResult.success) Object.assign(fieldErrors, fieldErrorsFromZod(classResult.error));
+  if (!studentIdResult.success) Object.assign(fieldErrors, fieldErrorsFromZod(studentIdResult.error));
+  if (
+    Object.keys(fieldErrors).length > 0 ||
+    !classResult.success ||
+    !studentIdResult.success
+  ) {
+    return invalidAction("Periksa data siswa.", fieldErrors);
+  }
+
+  const student = await db.student.findFirst({
+    where: { id: studentIdResult.data, class: { id: classResult.data, ownerId: user.id } },
+    select: { id: true },
+  });
+  if (!student) return invalidAction("Siswa tidak ditemukan.");
+
+  try {
+    await db.student.delete({ where: { id: student.id } });
+    revalidatePath(`/classes/${classResult.data}`);
+    return successfulAction("Siswa dihapus.");
+  } catch {
+    return invalidAction("Siswa tidak dapat dihapus. Silakan coba lagi.");
+  }
+}
+
 export async function addStudentAction(
   _previousState: ActionState,
   formData: FormData,
