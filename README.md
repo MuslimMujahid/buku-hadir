@@ -29,8 +29,16 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Deployment runs through GitHub Actions and Coolify:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Add the required GitHub Actions secret `COOLIFY_WEBHOOK` in the repository settings (**Settings → Secrets and variables → Actions**). Copy the webhook URL from the Coolify app's **Settings → Webhooks** section.
+2. In Coolify, change the app source from the Git repository/Dockerfile build to a pre-built Docker image and set the image to `ghcr.io/muslimmujahid/buku-hadir:latest`.
+3. Push to `main`. The workflow builds the existing Dockerfile, pushes the image to GitHub Container Registry (tagged `latest` and with the short commit SHA), then sends a `POST` request to `COOLIFY_WEBHOOK` to redeploy the image.
+
+### Pulling the image from Coolify
+
+If the GitHub Container Registry package is private, Coolify needs a personal access token (PAT) with `read:packages` access added as a registry credential in Coolify. Alternatively, make the GHCR package public in the GitHub package settings (**Packages → buku-hadir → Package settings → Visibility**).
+
+Keep the application's runtime environment variables configured in Coolify; they are not replaced by the container image workflow.

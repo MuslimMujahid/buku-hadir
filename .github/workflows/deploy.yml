@@ -1,0 +1,62 @@
+# Build the production image in GitHub Actions and ask Coolify to deploy it.
+name: Build and deploy
+
+on:
+  push:
+    branches:
+      - main
+
+# Never overlap deployments for the same workflow/branch. A newer push replaces
+# an older queued run so Coolify only receives the image that should be live.
+concurrency:
+  group: deploy-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The token needs package write access for GHCR; repository contents are only
+# checked out, so read access is sufficient there.
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Derive image tags and labels
+        id: metadata
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/muslimmujahid/buku-hadir
+          tags: |
+            # Keep a stable tag for Coolify and an immutable short-SHA tag for rollbacks.
+            type=raw,value=latest
+            type=sha,format=short
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
+
+      # Coolify is configured to pull the image above. The webhook starts its
+      # redeploy after the push has completed successfully.
+      - name: Trigger Coolify redeploy
+        env:
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_WEBHOOK }}
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --url "$COOLIFY_WEBHOOK"
