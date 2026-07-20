@@ -10,20 +10,27 @@ import { STATUS_BORDER } from "./status-styles";
  */
 export function MonthlyTable({ rows }: { rows: MonthlyStudentTotals[] }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-line bg-raised">
+    <div className="min-w-0 overflow-x-auto rounded-lg border border-line bg-raised [contain:paint]">
       <table className="w-full min-w-[26rem] text-sm">
         <caption className="sr-only">
           Jumlah kehadiran tiap siswa per status pada bulan ini
         </caption>
         <thead>
           <tr className="border-b border-line bg-sunk">
-            <th scope="col" className="px-4 py-2.5 text-left font-medium text-ink-soft">
+            <th
+              scope="col"
+              className="px-4 py-2.5 text-left font-medium text-ink-soft"
+            >
               Siswa
             </th>
             {ATTENDANCE_STATUSES.map((status) => {
               const meta = statusMeta[status];
               return (
-                <th key={status} scope="col" className="w-12 px-2 py-2.5 text-center font-medium">
+                <th
+                  key={status}
+                  scope="col"
+                  className="w-12 px-2 py-2.5 text-center font-medium"
+                >
                   <span
                     title={meta.word}
                     className={cn(
@@ -44,8 +51,14 @@ export function MonthlyTable({ rows }: { rows: MonthlyStudentTotals[] }) {
         <tbody className="divide-y divide-line">
           {rows.map((row, index) => (
             <tr key={row.studentId}>
-              <th scope="row" className="px-4 py-3 text-left font-medium text-ink">
-                <span aria-hidden="true" className="mr-2 font-mono text-xs font-normal text-ink-faint">
+              <th
+                scope="row"
+                className="px-4 py-3 text-left font-medium text-ink"
+              >
+                <span
+                  aria-hidden="true"
+                  className="mr-2 font-mono text-xs font-normal text-ink-faint"
+                >
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 {row.name}
@@ -53,7 +66,10 @@ export function MonthlyTable({ rows }: { rows: MonthlyStudentTotals[] }) {
               {ATTENDANCE_STATUSES.map((status) => {
                 const value = row.totals[status];
                 return (
-                  <td key={status} className="px-2 py-3 text-center font-mono tabular-nums">
+                  <td
+                    key={status}
+                    className="px-2 py-3 text-center font-mono tabular-nums"
+                  >
                     {value === 0 ? (
                       <span className="text-ink-faint">0</span>
                     ) : (
