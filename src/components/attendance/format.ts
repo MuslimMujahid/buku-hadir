@@ -28,6 +28,13 @@ const bulanPanjang = new Intl.DateTimeFormat(LOCALE, {
   year: "numeric",
 });
 
+/** Nama bulan pendek "Jan"–"Des" untuk grid pemilih bulan. */
+export const BULAN_PENDEK: readonly string[] = Array.from({ length: 12 }, (_, i) => {
+  return new Intl.DateTimeFormat(LOCALE, { ...ZONE, month: "short" }).format(
+    new Date(Date.UTC(2021, i, 1)),
+  );
+});
+
 /** "YYYY-MM-DD" → "Sabtu, 19 Juli 2026" (judul tanggal absensi). */
 export function formatTanggalPanjang(dateStr: string): string {
   return tanggalPanjang.format(new Date(`${dateStr}T00:00:00Z`));

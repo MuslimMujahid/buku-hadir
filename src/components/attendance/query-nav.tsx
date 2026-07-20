@@ -4,9 +4,12 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Combobox } from "@/components/ui/combobox";
 import { cn } from "@/components/ui/cn";
-import { isValidDateString, isValidMonthString, shiftDate, shiftMonth } from "./params";
+import type { AttendanceDateStatus } from "@/lib/data";
+import { DatePicker } from "./date-picker";
+import { MonthPicker } from "./month-picker";
+import { shiftDate, shiftMonth } from "./params";
 
 /**
  * Hook kecil untuk kontrol navigasi query: menggabungkan param aktif,
@@ -31,10 +34,15 @@ function useQueryNavigation() {
 
 const navButtonClass = "w-11 shrink-0 px-0";
 
-type DateNavProps = { date: string; className?: string };
+type DateNavProps = {
+  date: string;
+  statuses: AttendanceDateStatus[];
+  totalStudents: number;
+  className?: string;
+};
 
-/** Pemilih tanggal absensi: tombol hari sebelum/berikut + input date. */
-export function DateNav({ date, className }: DateNavProps) {
+/** Pemilih tanggal absensi: tombol hari sebelum/berikut + kalender. */
+export function DateNav({ date, statuses, totalStudents, className }: DateNavProps) {
   const { update, isPending } = useQueryNavigation();
   return (
     <div
@@ -50,17 +58,12 @@ export function DateNav({ date, className }: DateNavProps) {
         <ChevronLeft className="size-5" aria-hidden="true" />
       </Button>
       <div className="min-w-0 flex-1">
-        <label htmlFor="tanggal-absensi" className="sr-only">
-          Tanggal absensi
-        </label>
-        <Input
-          id="tanggal-absensi"
-          type="date"
-          value={date}
-          onChange={(event) => {
-            if (isValidDateString(event.target.value)) update({ date: event.target.value });
-          }}
-          className="text-center font-mono"
+        <DatePicker
+          key={date}
+          date={date}
+          statuses={statuses}
+          totalStudents={totalStudents}
+          onSelect={(nextDate) => update({ date: nextDate })}
         />
       </div>
       <Button
@@ -77,7 +80,7 @@ export function DateNav({ date, className }: DateNavProps) {
 
 type MonthNavProps = { month: string; className?: string };
 
-/** Pemilih bulan rekap: tombol bulan sebelum/berikut + input month. */
+/** Pemilih bulan rekap: tombol bulan sebelum/berikut + popover bulan. */
 export function MonthNav({ month, className }: MonthNavProps) {
   const { update, isPending } = useQueryNavigation();
   return (
@@ -94,17 +97,10 @@ export function MonthNav({ month, className }: MonthNavProps) {
         <ChevronLeft className="size-5" aria-hidden="true" />
       </Button>
       <div className="min-w-0 flex-1">
-        <label htmlFor="bulan-rekap" className="sr-only">
-          Bulan rekap
-        </label>
-        <Input
-          id="bulan-rekap"
-          type="month"
-          value={month}
-          onChange={(event) => {
-            if (isValidMonthString(event.target.value)) update({ month: event.target.value });
-          }}
-          className="text-center font-mono"
+        <MonthPicker
+          key={month}
+          month={month}
+          onSelectAction={(nextMonth) => update({ month: nextMonth })}
         />
       </div>
       <Button
@@ -133,18 +129,13 @@ export function StudentSelect({ students, value, className }: StudentSelectProps
       <label htmlFor="pilih-siswa" className="mb-1.5 block text-sm font-medium text-ink">
         Siswa
       </label>
-      <select
+      <Combobox
         id="pilih-siswa"
-        value={value ?? ""}
-        onChange={(event) => update({ student: event.target.value })}
-        className="h-11 w-full rounded-md border border-line-strong bg-raised px-3 text-base text-ink transition-colors focus:border-accent-strong"
-      >
-        {students.map((student) => (
-          <option key={student.id} value={student.id}>
-            {student.name}
-          </option>
-        ))}
-      </select>
+        items={students.map((student) => ({ id: student.id, label: student.name }))}
+        value={value}
+        onChangeAction={(id) => update({ student: id })}
+        aria-label="Siswa"
+      />
     </div>
   );
 }

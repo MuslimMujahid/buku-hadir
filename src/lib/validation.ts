@@ -19,6 +19,8 @@ export const studentNameSchema = z.object({
 
 export const classIdSchema = z.string().trim().min(1, "Kelas tidak valid.");
 
+export const studentIdSchema = z.string().trim().min(1, "Siswa tidak valid.");
+
 export function readFormString(formData: FormData, key: string): string {
   const value = formData.get(key);
   return typeof value === "string" ? value : "";
@@ -52,3 +54,22 @@ export function successfulAction(
   if (data && Object.keys(data).length > 0) result.data = data;
   return result;
 }
+/** Memecah daftar nama dari salinan spreadsheet menjadi sel nama yang rapi. */
+export function parseNameCells(input: string): string[] {
+  return input
+    .split(/(?:\r?\n|\t)+/)
+    .map((token) => token.trim().replace(/[ \t]+/g, " "))
+    .filter((token) => token.length > 0);
+}
+
+/** Memvalidasi daftar nama siswa untuk penambahan secara massal. */
+export const bulkStudentNamesSchema = z
+  .array(
+    z
+      .string()
+      .trim()
+      .min(1, "Nama siswa wajib diisi.")
+      .max(120, "Nama siswa terlalu panjang."),
+  )
+  .min(1, "Tambahkan minimal satu nama.")
+  .max(500, "Maksimal 500 nama sekaligus.");

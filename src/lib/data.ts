@@ -32,6 +32,9 @@ export type OwnedClassArgs = { classId: string };
 export type AttendanceForDateArgs = { classId: string; date: string };
 export type StudentRecapArgs = { classId: string; month: string; studentId: string };
 export type MonthlyRecapArgs = { classId: string; month: string };
+
+export type AttendanceDateStatus = { date: string; markedCount: number };
+export type AttendanceDatesArgs = { classId: string };
 export async function getOwnedClasses(): Promise<OwnedClass[]> {
   const user = await requireUser();
   return db.class.findMany({
@@ -155,4 +158,29 @@ export async function getMonthlyRecap(
   }));
   const allAttendance = klass.students.flatMap((student) => student.attendance);
   return { month: args.month, totals: aggregateStatusTotals(allAttendance), students };
+}
+
+export function getAttendanceDates(classId: string): Promise<AttendanceDateStatus[]>;
+export function getAttendanceDates(args: AttendanceDatesArgs): Promise<AttendanceDateStatus[]>;
+export async function getAttendanceDates(
+  input: string | AttendanceDatesArgs,
+): Promise<AttendanceDateStatus[]> {
+  const user = await requireUser();
+  const args = typeof input === "string" ? { classId: input } : input;
+  if (typeof args.classId !== "string" || args.classId.trim().length === 0) return [];
+
+  const records = await db.attendance.groupBy({
+    by: ["date"],
+    where: {
+      student: { class: { id: args.classId, ownerId: user.id } },
+    },
+    _count: { studentId: true },
+  });
+
+  return records
+    .map((r) => ({
+      date: r.date.toISOString().slice(0, 10),
+      markedCount: r._count.studentId,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
