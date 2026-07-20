@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 import { cn } from "@/components/ui/cn";
 import type { AttendanceDateStatus } from "@/lib/data";
 import { DatePicker } from "./date-picker";
@@ -128,18 +129,13 @@ export function StudentSelect({ students, value, className }: StudentSelectProps
       <label htmlFor="pilih-siswa" className="mb-1.5 block text-sm font-medium text-ink">
         Siswa
       </label>
-      <select
+      <Combobox
         id="pilih-siswa"
-        value={value ?? ""}
-        onChange={(event) => update({ student: event.target.value })}
-        className="h-11 w-full rounded-md border border-line-strong bg-raised px-3 text-base text-ink transition-colors focus:border-accent-strong"
-      >
-        {students.map((student) => (
-          <option key={student.id} value={student.id}>
-            {student.name}
-          </option>
-        ))}
-      </select>
+        items={students.map((student) => ({ id: student.id, label: student.name }))}
+        value={value}
+        onChangeAction={(id) => update({ student: id })}
+        aria-label="Siswa"
+      />
     </div>
   );
 }
