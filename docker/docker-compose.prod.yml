@@ -2,7 +2,7 @@ name: absensi
 
 services:
   app:
-    image: ghcr.io/muslimmujahid/buku-hadir:latest
+    image: ghcr.io/muslimmujahid/buku-hadir:${IMAGE_TAG:-latest}
     pull_policy: always
     restart: unless-stopped
     environment:
