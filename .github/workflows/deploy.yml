@@ -54,20 +54,27 @@ jobs:
       # Coolify is configured to pull the image above. The webhook starts its
       # redeploy after the push has completed successfully. Pin the deploy to
       # the immutable short-SHA tag so a stale `latest` is never pulled.
+      #
+      # NOTE: This API call requires a Coolify API token with write permission.
+      # If the token lacks it, the deployment falls back to the mutable `latest`
+      # tag and continues so the site is not left broken.
       - name: Update Coolify IMAGE_TAG env var
         env:
           COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_WEBHOOK }}
           COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
         run: |
-          SHORT_SHA=${GITHUB_SHA::7}
+          IMAGE_TAG="sha-${GITHUB_SHA::7}"
           APP_UUID=$(echo "$COOLIFY_WEBHOOK" | sed -n 's/.*[?&]uuid=\([^&]*\).*/\1/p')
           COOLIFY_BASE_URL=$(echo "$COOLIFY_WEBHOOK" | awk -F '/api/v1' '{print $1}')
           curl --fail --silent --show-error \
             --request PATCH \
             --header "Authorization: Bearer $COOLIFY_API_TOKEN" \
             --header "Content-Type: application/json" \
-            --data "{\"data\":[{\"key\":\"IMAGE_TAG\",\"value\":\"$SHORT_SHA\"}]}" \
-            "${COOLIFY_BASE_URL}/api/v1/applications/${APP_UUID}/envs/bulk"
+            --data "{\"data\":[{\"key\":\"IMAGE_TAG\",\"value\":\"$IMAGE_TAG\"}]}" \
+            "${COOLIFY_BASE_URL}/api/v1/applications/${APP_UUID}/envs/bulk" || {
+              echo "WARNING: Could not update IMAGE_TAG in Coolify (token may lack write permission)."
+              echo "         Deployment will use the latest tag. Consider creating a Coolify API token with write permission."
+            }
 
       - name: Trigger Coolify redeploy
         env:
