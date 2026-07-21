@@ -26,6 +26,13 @@ export const metadata: Metadata = {
   },
   description:
     "Aplikasi absensi kelas untuk guru: kelola kelas dan siswa, catat kehadiran harian, dan lihat rekap bulanan.",
+  icons: {
+    icon: [
+      { url: "/logo-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/logo-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/logo-180.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {
