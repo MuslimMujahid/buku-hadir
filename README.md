@@ -33,9 +33,13 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 Deployment runs through GitHub Actions and Coolify:
 
-1. Add the required GitHub Actions secret `COOLIFY_WEBHOOK` in the repository settings (**Settings → Secrets and variables → Actions**). Copy the webhook URL from the Coolify app's **Settings → Webhooks** section.
-2. In Coolify, change the app source from the Git repository/Dockerfile build to a pre-built Docker image and set the image to `ghcr.io/muslimmujahid/buku-hadir:latest`.
-3. Push to `main`. The workflow builds the existing Dockerfile, pushes the image to GitHub Container Registry (tagged `latest` and with the short commit SHA), then sends a `POST` request to `COOLIFY_WEBHOOK` to redeploy the image.
+1. Enable the Coolify API: **Settings → Advanced → API Settings → API Access**.
+2. Create an API token in Coolify: **Security → API Tokens**, give it a name, and select the `deploy` permission. Copy the full token (`ID|SECRET`) immediately.
+3. Add two GitHub Actions secrets in the repository settings (**Settings → Secrets and variables → Actions**):
+   - `COOLIFY_WEBHOOK` — copy the webhook URL from the Coolify app's **Settings → Webhooks** section.
+   - `COOLIFY_API_TOKEN` — the full API token copied above.
+4. Keep the Coolify app source as **Docker Compose** and make sure it loads `docker/docker-compose.prod.yml`. The compose file now pulls the pre-built image `ghcr.io/muslimmujahid/buku-hadir:latest` instead of building from the Dockerfile.
+5. Push to `main`. The workflow builds the existing Dockerfile, pushes the image to GitHub Container Registry (tagged `latest` and with the short commit SHA), then sends an authenticated `POST` request to `COOLIFY_WEBHOOK` to redeploy the image. Coolify will pull the new image and recreate the container.
 
 ### Pulling the image from Coolify
 
