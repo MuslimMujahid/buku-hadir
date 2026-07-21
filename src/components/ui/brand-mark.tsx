@@ -1,8 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/components/ui/cn";
 
 /**
- * Buku Hadir wordmark — a coral "stamp" tile with an editorial serif wordmark.
+ * Buku Hadir wordmark with the supplied brand artwork.
  * Server-safe; wraps in Link when href is provided.
  */
 export function BrandMark({
@@ -14,12 +15,14 @@ export function BrandMark({
 }) {
   const mark = (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <span
+      <Image
+        src="/logo.png"
+        alt=""
         aria-hidden="true"
-        className="flex size-8 items-center justify-center rounded-sm border-2 border-accent-strong bg-accent-strong font-display text-lg font-bold text-white shadow-card"
-      >
-        BH
-      </span>
+        width={40}
+        height={40}
+        className="size-10 rounded-sm"
+      />
       <span className="font-display text-xl font-semibold tracking-tight text-ink">
         Buku Hadir
       </span>
